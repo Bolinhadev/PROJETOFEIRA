@@ -99,7 +99,7 @@ const initialProjectsData = [
     • A Usina Hidrelétrica de Itaipu é líder mundial de energia limpa e renovável
     • Produção anual de energia estável e consistente
     • Exemplo de desenvolvimento sustentável e tecnologia avançada`,
-    imageUrl: 'https://source.unsplash.com/random/800x600/?itaipu-dam',
+    imageUrl: 'https://swisscam.com.br/wp-content/uploads/sites/44/2019/06/logo-colegio-suico-1.jpg',
     authors: "Henrique, Davi, Gustavo S, Caetano, João Marcelo, Matheus D, Miguel"
   },
   {
@@ -125,7 +125,7 @@ const initialProjectsData = [
     • 1500 - 12.000 metros por segundo
     • 80% lado argentino
     • Rio Paraná`,
-    imageUrl: 'https://source.unsplash.com/random/800x600/?iguazu-falls',
+    imageUrl: 'https://swisscam.com.br/wp-content/uploads/sites/44/2019/06/logo-colegio-suico-1.jpg',
     authors: "Maele, Alana, Nicole, Francisco, Maria Fernanda e Larry"
   }
 ];
