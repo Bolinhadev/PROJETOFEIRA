@@ -250,67 +250,94 @@ function App() {
     }
   };
 
-  // Função de mudança de idioma atualizada
   const handleLanguageChange = async (lang) => {
     setSelectedLang(lang);
+    
+    // Se for português, restaura os dados originais
     if (lang === 'pt') {
       setProjectsData(initialProjectsData);
       setTestimonials(initialTestimonials);
       setWhyImportant(initialWhyImportant);
       return;
     }
-
+  
     setIsTranslating(true);
-
+  
     try {
+      // Traduz cada texto sequencialmente para evitar sobrecarga da API
+      const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+  
       // Traduz projetos
-      const updatedProjects = await Promise.all(
-        initialProjectsData.map(async (project) => ({
+      const updatedProjects = [];
+      for (const project of initialProjectsData) {
+        const translatedProject = {
           ...project,
           title: await translateLongText(project.title, lang),
           shortDescription: await translateLongText(project.shortDescription, lang),
           fullDescription: await translateLongText(project.fullDescription, lang),
           authors: await translateLongText(project.authors, lang)
-        }))
-      );
+        };
+        updatedProjects.push(translatedProject);
+        await delay(100); // Pequeno delay entre projetos
+      }
       setProjectsData(updatedProjects);
-
+      console.log('Projetos traduzidos:', updatedProjects);
+  
       // Traduz depoimentos
-      const updatedTestimonials = await Promise.all(
-        initialTestimonials.map(async (testimonial) => ({
+      const updatedTestimonials = [];
+      for (const testimonial of initialTestimonials) {
+        const translatedTestimonial = {
           ...testimonial,
           quote: await translateLongText(testimonial.quote, lang),
           author: await translateLongText(testimonial.author, lang),
           role: await translateLongText(testimonial.role, lang)
-        }))
-      );
+        };
+        updatedTestimonials.push(translatedTestimonial);
+        await delay(100); // Pequeno delay entre depoimentos
+      }
       setTestimonials(updatedTestimonials);
-
+      console.log('Depoimentos traduzidos:', updatedTestimonials);
+  
       // Traduz motivos
-      const updatedWhyImportant = await Promise.all(
-        initialWhyImportant.map(async (item) => ({
+      const updatedWhyImportant = [];
+      for (const item of initialWhyImportant) {
+        const translatedItem = {
           ...item,
           title: await translateLongText(item.title, lang),
           text: await translateLongText(item.text, lang)
-        }))
-      );
+        };
+        updatedWhyImportant.push(translatedItem);
+        await delay(100); // Pequeno delay entre motivos
+      }
       setWhyImportant(updatedWhyImportant);
-
+      console.log('Motivos traduzidos:', updatedWhyImportant);
+  
+      // Mostra feedback de sucesso
       toast({
         title: "Tradução concluída",
+        description: "Todo o conteúdo foi traduzido com sucesso",
         status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.error('Erro na tradução:', error);
-      toast({
-        title: "Erro na tradução",
-        description: "Tente novamente mais tarde",
-        status: "error",
         duration: 3000,
         isClosable: true,
       });
+  
+    } catch (error) {
+      console.error('Erro durante a tradução:', error);
+      // Mostra feedback de erro
+      toast({
+        title: "Erro na tradução",
+        description: "Ocorreu um erro ao traduzir o conteúdo. Tente novamente.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+  
+      // Em caso de erro, volta para português
+      setSelectedLang('pt');
+      setProjectsData(initialProjectsData);
+      setTestimonials(initialTestimonials);
+      setWhyImportant(initialWhyImportant);
+  
     } finally {
       setIsTranslating(false);
     }
@@ -398,79 +425,82 @@ function App() {
         </Box>
 
         {/* Projetos */}
-        <Box py={20}>
-          <Container maxW="container.xl">
-            <Heading textAlign="center" color="brand.500" size="2xl" mb={12}>
-              {getText('projects')}
+        {/* Projetos */}
+<Box py={20}>
+  <Container maxW="container.xl">
+    <Heading textAlign="center" color="brand.500" size="2xl" mb={12}>
+      {getText('projects')}
+    </Heading>
+    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
+      {projectsData.map((project) => (
+        <Box
+          key={project.id}
+          bg="white"
+          rounded="xl"
+          shadow="xl"
+          overflow="hidden"
+          cursor="pointer"
+          onClick={() => {
+            setSelectedProject(project);
+            onOpen();
+          }}
+          _hover={{ transform: 'translateY(-5px)', shadow: '2xl' }}
+          transition="all 0.3s"
+        >
+          <Image
+            src={project.imageUrl}
+            alt={project.title}
+            h="300px"
+            w="full"
+            objectFit="cover"
+          />
+          <Box p={6}>
+            <Heading size="md" mb={3} color="brand.500">
+              {selectedLang === 'pt' ? initialProjectsData[project.id - 1].title : project.title}
             </Heading>
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
-              {projectsData.map((project) => (
-                <Box
-                  key={project.id}
-                  bg="white"
-                  rounded="xl"
-                  shadow="xl"
-                  overflow="hidden"
-                  cursor="pointer"
-                  onClick={() => {
-                    setSelectedProject(project);
-                    onOpen();
-                  }}
-                  _hover={{ transform: 'translateY(-5px)', shadow: '2xl' }}
-                  transition="all 0.3s"
-                >
-                  <Image
-                    src={project.imageUrl}
-                    alt={project.title}
-                    h="300px"
-                    w="full"
-                    objectFit="cover"
-                  />
-                  <Box p={6}>
-                    <Heading size="md" mb={3} color="brand.500">
-                      {project.title}
-                    </Heading>
-                    <Text color="gray.600">
-                      {project.shortDescription}
-                    </Text>
-                    <Text mt={4} fontSize="sm" color="gray.500">
-                      {project.authors}
-                    </Text>
-                  </Box>
-                </Box>
-              ))}
-            </SimpleGrid>
-          </Container>
+            <Text color="gray.600">
+              {selectedLang === 'pt' ? initialProjectsData[project.id - 1].shortDescription : project.shortDescription}
+            </Text>
+            <Text mt={4} fontSize="sm" color="gray.500">
+              {selectedLang === 'pt' ? initialProjectsData[project.id - 1].authors : project.authors}
+            </Text>
+          </Box>
         </Box>
+      ))}
+    </SimpleGrid>
+  </Container>
+</Box>
 
         {/* Depoimentos */}
-        <Box py={20} bg="white">
-          <Container maxW="container.xl">
-            <Heading textAlign="center" color="brand.500" mb={12}>
-              {getText('testimonials')}
-            </Heading>
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
-              {testimonials.map((testimonial, index) => (
-                <Box
-                  key={index}
-                  bg="gray.50"
-                  p={8}
-                  borderRadius="lg"
-                  shadow="md"
-                  _hover={{ transform: 'translateY(-5px)' }}
-                  transition="all 0.3s"
-                >
-                  <Text fontSize="lg" fontStyle="italic" mb={4}>
-                    "{testimonial.quote}"
-                  </Text>
-                  <Text color="brand.500" fontWeight="bold">
-                    – {testimonial.author}, {testimonial.role}
-                  </Text>
-                </Box>
-              ))}
-            </SimpleGrid>
-          </Container>
+        {/* Depoimentos */}
+<Box py={20} bg="white">
+  <Container maxW="container.xl">
+    <Heading textAlign="center" color="brand.500" mb={12}>
+      {getText('testimonials')}
+    </Heading>
+    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={10}>
+      {testimonials.map((testimonial, index) => (
+        <Box
+          key={index}
+          bg="gray.50"
+          p={8}
+          borderRadius="lg"
+          shadow="md"
+          _hover={{ transform: 'translateY(-5px)' }}
+          transition="all 0.3s"
+        >
+          <Text fontSize="lg" fontStyle="italic" mb={4}>
+            "{selectedLang === 'pt' ? initialTestimonials[index].quote : testimonial.quote}"
+          </Text>
+          <Text color="brand.500" fontWeight="bold">
+            – {selectedLang === 'pt' ? initialTestimonials[index].author : testimonial.author}, 
+            {selectedLang === 'pt' ? initialTestimonials[index].role : testimonial.role}
+          </Text>
         </Box>
+      ))}
+    </SimpleGrid>
+  </Container>
+</Box>
 
         {/* Por que foi importante */}
         <Box py={20} bg="gray.50">
@@ -494,35 +524,42 @@ function App() {
         </Box>
 
         {/* Modal */}
-        <Modal isOpen={isOpen} onClose={onClose} size="xl">
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader color="brand.500">
-              {selectedProject?.title}
-            </ModalHeader>
-            <ModalCloseButton />
-            <ModalBody pb={6}>
-              {selectedProject && (
-                <VStack align="stretch" spacing={6}>
-                  <Image
-                    src={selectedProject.imageUrl}
-                    alt={selectedProject.title}
-                    borderRadius="lg"
-                    objectFit="cover"
-                    maxH="400px"
-                    w="full"
-                  />
-                  <Text whiteSpace="pre-line" color="gray.700">
-                    {selectedProject.fullDescription}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    {selectedProject.authors}
-                  </Text>
-                </VStack>
-              )}
-            </ModalBody>
-          </ModalContent>
-        </Modal>
+        {/* Modal */}
+<Modal isOpen={isOpen} onClose={onClose} size="xl">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader color="brand.500">
+      {selectedProject && (selectedLang === 'pt' ? 
+        initialProjectsData[selectedProject.id - 1].title : 
+        selectedProject.title)}
+    </ModalHeader>
+    <ModalCloseButton />
+    <ModalBody pb={6}>
+      {selectedProject && (
+        <VStack align="stretch" spacing={6}>
+          <Image
+            src={selectedProject.imageUrl}
+            alt={selectedProject.title}
+            borderRadius="lg"
+            objectFit="cover"
+            maxH="400px"
+            w="full"
+          />
+          <Text whiteSpace="pre-line" color="gray.700">
+            {selectedLang === 'pt' ? 
+              initialProjectsData[selectedProject.id - 1].fullDescription : 
+              selectedProject.fullDescription}
+          </Text>
+          <Text fontSize="sm" color="gray.500">
+            {selectedLang === 'pt' ? 
+              initialProjectsData[selectedProject.id - 1].authors : 
+              selectedProject.authors}
+          </Text>
+        </VStack>
+      )}
+    </ModalBody>
+  </ModalContent>
+</Modal>
 
         {/* Footer */}
         <Box as="footer" bg="brand.500" color="white" py={6}>
