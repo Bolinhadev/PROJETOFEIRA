@@ -22,6 +22,7 @@ import {
   extendTheme,
   Grid,
   Spinner,
+  useToast,
 } from '@chakra-ui/react';
 import axios from 'axios';
 
@@ -130,7 +131,6 @@ const initialProjectsData = [
   }
 ];
 
-// Dados dos depoimentos e motivos
 const initialTestimonials = [
   {
     quote: "Eu achei a semana de estudos muito legal! Todos os lugares que a gente foi foram muito bem escolhidos pela escola como O Parque das Aves, Refúgio Biológico, Hidrelétrica de Itaipu, e Cataratas do Iguaçu. As comidas também estavam bem boas, lá a gente comeu churrasco, comida japonesa e comida italiana.",
@@ -161,10 +161,11 @@ const initialWhyImportant = [
 
 
 
-// VAI PORRA
+// AGORA ESSA PORRA VAI TER QUE FUNCIONAR, SE NAO EU VOU ME ATIRAR CONTRA A PAREDE NESSA PORRA TAMBEM!!!!
 
+// ANTENOR SEU FUDIDO, ME MANDA A PORRA DOS TEXTOS!! CACETE
 
-// Funções de tradução
+// Função para dividir texto em chunks menores
 const splitTextIntoChunks = (text, maxLength = 450) => {
   const chunks = [];
   let currentChunk = '';
@@ -209,7 +210,6 @@ const splitTextIntoChunks = (text, maxLength = 450) => {
   return chunks;
 };
 
-// Componente principal
 function App() {
   const [selectedLang, setSelectedLang] = useState('pt');
   const [isTranslating, setIsTranslating] = useState(false);
@@ -218,34 +218,39 @@ function App() {
   const [projectsData, setProjectsData] = useState(initialProjectsData);
   const [testimonials, setTestimonials] = useState(initialTestimonials);
   const [whyImportant, setWhyImportant] = useState(initialWhyImportant);
+  const toast = useToast();
 
+  // Função de tradução atualizada
   const translateLongText = async (text, targetLang) => {
     if (targetLang === 'pt') return text;
+    let translatedText = '';
     
     try {
       const chunks = splitTextIntoChunks(text);
+      const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
       
-      const translatedChunks = await Promise.all(
-        chunks.map(async (chunk) => {
-          try {
-            const response = await axios.get(
-              `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=pt|${targetLang}`
-            );
-            return response.data.responseData.translatedText;
-          } catch (error) {
-            console.error('Erro na tradução de chunk:', error);
-            return chunk;
-          }
-        })
-      );
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        try {
+          const response = await axios.get(
+            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=pt|${targetLang}`
+          );
+          translatedText += response.data.responseData.translatedText + '\n';
+          await delay(100); // Pequeno delay para evitar muitas requisições simultâneas
+        } catch (error) {
+          console.error('Erro na tradução de chunk:', error);
+          translatedText += chunk + '\n';
+        }
+      }
       
-      return translatedChunks.join('\n');
+      return translatedText.trim();
     } catch (error) {
       console.error('Erro na tradução:', error);
       return text;
     }
   };
 
+  // Função de mudança de idioma atualizada
   const handleLanguageChange = async (lang) => {
     setSelectedLang(lang);
     if (lang === 'pt') {
@@ -260,20 +265,22 @@ function App() {
     try {
       // Traduz projetos
       const updatedProjects = await Promise.all(
-        projectsData.map(async (project) => ({
+        initialProjectsData.map(async (project) => ({
           ...project,
           title: await translateLongText(project.title, lang),
           shortDescription: await translateLongText(project.shortDescription, lang),
-          fullDescription: await translateLongText(project.fullDescription, lang)
+          fullDescription: await translateLongText(project.fullDescription, lang),
+          authors: await translateLongText(project.authors, lang)
         }))
       );
       setProjectsData(updatedProjects);
 
       // Traduz depoimentos
       const updatedTestimonials = await Promise.all(
-        testimonials.map(async (testimonial) => ({
+        initialTestimonials.map(async (testimonial) => ({
           ...testimonial,
           quote: await translateLongText(testimonial.quote, lang),
+          author: await translateLongText(testimonial.author, lang),
           role: await translateLongText(testimonial.role, lang)
         }))
       );
@@ -281,7 +288,7 @@ function App() {
 
       // Traduz motivos
       const updatedWhyImportant = await Promise.all(
-        whyImportant.map(async (item) => ({
+        initialWhyImportant.map(async (item) => ({
           ...item,
           title: await translateLongText(item.title, lang),
           text: await translateLongText(item.text, lang)
@@ -289,8 +296,21 @@ function App() {
       );
       setWhyImportant(updatedWhyImportant);
 
+      toast({
+        title: "Tradução concluída",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
     } catch (error) {
       console.error('Erro na tradução:', error);
+      toast({
+        title: "Erro na tradução",
+        description: "Tente novamente mais tarde",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
     } finally {
       setIsTranslating(false);
     }
