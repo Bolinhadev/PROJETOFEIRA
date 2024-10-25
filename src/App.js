@@ -138,9 +138,9 @@ const initialTestimonials = [
     role: "Aluno"
   },
   {
-    quote: "Ver os alunos tão envolvidos com a ciência e inovação foi muito gratificante. A semana superou todas as expectativas!",
-    author: "Professora Raissa",
-    role: "Professora"
+    quote: "2 semanas, fomos para Foz de Iguaçu. Eu nunca fui a Foz de Iguaçu em toda a minha vida, então fiquei muito feliz e animado quando descobri que iríamos para Foz.",
+    author: "Martin",
+    role: "Aluno"
   }
 ];
 
